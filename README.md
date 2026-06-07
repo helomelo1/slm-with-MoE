@@ -9,7 +9,7 @@ The model is trained on the `roneneldan/TinyStories` dataset, demonstrating that
 
 The core architecture is a decoder-only Transformer with sparse MoE layers substituting the standard feed-forward networks (FFNs). 
 
-![SLM-MoE Architecture Diagram](architecture.png)
+![SLM-MoE Architecture Diagram](plots and images/architecture.png)
 
 ### Hyperparameters
 - **Parameter Count:** ~12M
@@ -32,7 +32,7 @@ A core focus of this project is understanding the internal representations forme
 ### Layer-wise Routing Heatmaps
 By visualizing the routing distribution per layer, we can observe the efficacy of the load-balancing auxiliary loss and the onset of expert specialization. The heatmap below demonstrates how tokens are routed across 4 experts in a 6-layer architecture.
 
-![Expert Routing Heatmap at Step 20,000](plots/experts_step_20000.png)
+![Expert Routing Heatmap at Step 20,000](plots and images/experts_step_20000.png)
 
 Current and ongoing experiments also include:
 - **Polysemanticity Analysis:** Passing validation sets through the network and mapping the highest-activating tokens for each expert to determine if experts are learning monosemantic linguistic features (e.g., punctuation, verbs, specific semantic clusters).

@@ -6,14 +6,18 @@ This repository contains a custom implementation of a Sparse Mixture of Experts 
 The model is trained on the `roneneldan/TinyStories` dataset, demonstrating that sparse conditional computation can be effectively leveraged to learn syntax, grammar, and basic semantic grouping without requiring billion-parameter scales.
 
 ## Architecture
+
 The core architecture is a decoder-only Transformer with sparse MoE layers substituting the standard feed-forward networks (FFNs). 
 
+![SLM-MoE Architecture Diagram](architecture.png)
+
+### Hyperparameters
 - **Parameter Count:** ~12M
 - **Layers:** 6
-- **Hidden Dimension (d_model):** 256
-- **Attention:** 4 heads (head_dim = 64) with Rotary Positional Embeddings (RoPE)
+- **Hidden Dimension (`d_model`):** 256
+- **Attention:** 4 heads (`head_dim` = 64) with Rotary Positional Embeddings (RoPE)
 - **MoE Configuration:** 4 experts per layer, Top-2 routing strategy
-- **Expert Dimension (d_ffn):** 512
+- **Expert Dimension (`d_ffn`):** 512
 - **Vocabulary Size:** 16,000 (Custom trained SentencePiece BPE)
 - **Context Length:** 256 tokens
 
@@ -25,9 +29,13 @@ To mitigate this, the training loop implements an auxiliary load-balancing loss.
 ## Mechanistic Interpretability
 A core focus of this project is understanding the internal representations formed by the experts. 
 
-Current and ongoing experiments include:
+### Layer-wise Routing Heatmaps
+By visualizing the routing distribution per layer, we can observe the efficacy of the load-balancing auxiliary loss and the onset of expert specialization. The heatmap below demonstrates how tokens are routed across 4 experts in a 6-layer architecture.
+
+![Expert Routing Heatmap at Step 20,000](plots/experts_step_20000.png)
+
+Current and ongoing experiments also include:
 - **Polysemanticity Analysis:** Passing validation sets through the network and mapping the highest-activating tokens for each expert to determine if experts are learning monosemantic linguistic features (e.g., punctuation, verbs, specific semantic clusters).
-- **Layer-wise Routing Heatmaps:** Generating normalized routing distributions per layer to observe the efficacy of the auxiliary loss and the onset of expert specialization.
 
 ## Inference and Generation
 The inference pipeline is designed for both programmatic evaluation and interactive testing. The generation script supports standard stochastic sampling techniques including Temperature, Top-K, and Nucleus (Top-p) sampling.

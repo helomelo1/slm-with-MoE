@@ -138,12 +138,12 @@ def main():
     sp = spm.SentencePieceProcessor(model_file=args.sp_model)
 
     n = sum(p.numel() for p in model.parameters())
-    print(f"✅  Loaded ({n / 1e6:.1f}M params) on {device}")
+    print(f"Loaded ({n / 1e6:.1f}M params) on {device}")
     print(f"    temp={args.temperature}  top_k={args.top_k}  "
           f"top_p={args.top_p}\n")
 
     if args.interactive:
-        print("🔮  Interactive mode  (type 'quit' to exit)\n")
+        print("Interactive mode  (type 'quit' to exit)\n")
         while True:
             prompt = input("You > ").strip()
             if prompt.lower() in ("quit", "exit", "q"):

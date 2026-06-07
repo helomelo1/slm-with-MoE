@@ -25,16 +25,16 @@ SP_MODEL = "tokenizer/tinystories_sp.model"
 
 def train_tokenizer():
     raw = "tinystories_raw.txt"
-    print("📥  Loading TinyStories for tokenizer training...")
+    print("     Loading TinyStories for tokenizer training...")
     ds = load_dataset("roneneldan/TinyStories", split="train")
 
-    print(f"📝  Dumping text → {raw}")
+    print(f"     Dumping text → {raw}")
     with open(raw, "w") as f:
         for ex in tqdm(ds, desc="  Writing stories", unit=" stories"):
             f.write(ex["text"].strip() + "\n")
 
     os.makedirs("tokenizer", exist_ok=True)
-    print("🔧  Training SentencePiece BPE (vocab=16000)...")
+    print("     Training SentencePiece BPE (vocab=16000)...")
     spm.SentencePieceTrainer.train(
         input=raw,
         model_prefix="tokenizer/tinystories_sp",
@@ -50,7 +50,7 @@ def train_tokenizer():
 
     sp = spm.SentencePieceProcessor(model_file=SP_MODEL)
     test = "Once upon a time there was a little cat."
-    print(f"✅  Tokenizer ready  (vocab={sp.get_piece_size()})")
+    print(f"    Tokenizer ready  (vocab={sp.get_piece_size()})")
     print(f"    \"{test}\"  →  {sp.encode(test)}")
 
 
@@ -61,7 +61,7 @@ class StoriesDataset(Dataset):
         self.max_seq_len = max_seq_len
         BOS, EOS = sp.bos_id(), sp.eos_id()
 
-        print(f"📥  Loading TinyStories/{split}...")
+        print(f"    Loading TinyStories/{split}...")
         ds = load_dataset("roneneldan/TinyStories", split=split)
 
         self.examples = []
@@ -73,7 +73,7 @@ class StoriesDataset(Dataset):
                 self.examples.append(buf[: max_seq_len + 1])
                 buf = buf[max_seq_len:]
 
-        print(f"✅  {split}: {len(self.examples):,} examples\n")
+        print(f"{split}: {len(self.examples):,} examples\n")
 
     def __len__(self):
         return len(self.examples)
@@ -169,7 +169,7 @@ def save_expert_heatmap(counts, n_experts, step, out_dir="plots"):
     plt.tight_layout()
     plt.savefig(path, dpi=150)
     plt.close()
-    print(f"  📊  Heatmap → {path}")
+    print(f"  Heatmap → {path}")
 
 
 # ━━━  LR schedule  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -234,7 +234,7 @@ def main():
 
     # tokenizer — train if missing
     if not os.path.exists(SP_MODEL):
-        print("⚠️   Tokenizer not found — training one first...\n")
+        print("     Tokenizer not found — training one first...\n")
         train_tokenizer()
         print()
     sp = spm.SentencePieceProcessor(model_file=SP_MODEL)
@@ -256,7 +256,7 @@ def main():
         ckpt = torch.load(args.resume, map_location=device, weights_only=False)
         model.load_state_dict(ckpt["model"])
         start_step = ckpt.get("step", 0)
-        print(f"📂  Resumed from {args.resume}  (step {start_step})")
+        print(f"Resumed from {args.resume}  (step {start_step})")
 
     # ── eval-only mode ──
     if args.eval_only:
@@ -360,7 +360,7 @@ def main():
             vloss, vppl, vacc, ecounts = run_eval(
                 model, val_loader, device, n_experts
             )
-            pbar.write(f"  📊 step {step}  val_loss {vloss:.4f}  "
+            pbar.write(f"  step {step}  val_loss {vloss:.4f}  "
                        f"val_ppl {vppl:.2f}  acc {vacc * 100:.2f}%")
             print_experts(ecounts, n_experts)
             save_expert_heatmap(ecounts, n_experts, step)
@@ -373,7 +373,7 @@ def main():
                 "val_loss": vloss,
                 "val_ppl": vppl,
             }, f"checkpoints/step_{step}.pt")
-            pbar.write(f"  💾 checkpoints/step_{step}.pt")
+            pbar.write(f"  checkpoints/step_{step}.pt")
             pbar.write(f"{'─' * 60}\n")
             model.train()
 
@@ -385,7 +385,7 @@ def main():
         "optimizer": optimizer.state_dict(),
         "config": model_config,
     }, "checkpoints/final.pt")
-    print("\n✅  Done — checkpoints/final.pt")
+    print("\nDone — checkpoints/final.pt")
 
 
 if __name__ == "__main__":

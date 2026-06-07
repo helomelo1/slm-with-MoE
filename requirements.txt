@@ -1,0 +1,5 @@
+torch
+datasets
+sentencepiece
+matplotlib
+numpy

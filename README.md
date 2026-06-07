@@ -1,1 +1,67 @@
-# slm-with-MoE
+# SLM-MoE: Small Language Model with Sparse Mixture of Experts
+
+## Overview
+This repository contains a custom implementation of a Sparse Mixture of Experts (MoE) Language Model, built entirely from scratch in PyTorch. The primary objective of this project is to explore the training dynamics, routing behaviors, and inference optimizations of MoE architectures in a constrained parameter regime (~12M parameters). 
+
+The model is trained on the `roneneldan/TinyStories` dataset, demonstrating that sparse conditional computation can be effectively leveraged to learn syntax, grammar, and basic semantic grouping without requiring billion-parameter scales.
+
+## Architecture
+The core architecture is a decoder-only Transformer with sparse MoE layers substituting the standard feed-forward networks (FFNs). 
+
+- **Parameter Count:** ~12M
+- **Layers:** 6
+- **Hidden Dimension (d_model):** 256
+- **Attention:** 4 heads (head_dim = 64) with Rotary Positional Embeddings (RoPE)
+- **MoE Configuration:** 4 experts per layer, Top-2 routing strategy
+- **Expert Dimension (d_ffn):** 512
+- **Vocabulary Size:** 16,000 (Custom trained SentencePiece BPE)
+- **Context Length:** 256 tokens
+
+## Training Dynamics and Load Balancing
+A known failure mode of MoE architectures is expert collapse, where the router converges to utilizing only a small subset of experts, effectively reducing the active capacity of the network. 
+
+To mitigate this, the training loop implements an auxiliary load-balancing loss. The loss minimizes the Mean Squared Error (MSE) between the empirical routing distribution and a uniform target distribution across the batch. Non-invasive PyTorch forward hooks are utilized to capture the raw router gate logits during the forward pass, ensuring the core model logic remains decoupled from the training objective.
+
+## Mechanistic Interpretability
+A core focus of this project is understanding the internal representations formed by the experts. 
+
+Current and ongoing experiments include:
+- **Polysemanticity Analysis:** Passing validation sets through the network and mapping the highest-activating tokens for each expert to determine if experts are learning monosemantic linguistic features (e.g., punctuation, verbs, specific semantic clusters).
+- **Layer-wise Routing Heatmaps:** Generating normalized routing distributions per layer to observe the efficacy of the auxiliary loss and the onset of expert specialization.
+
+## Inference and Generation
+The inference pipeline is designed for both programmatic evaluation and interactive testing. The generation script supports standard stochastic sampling techniques including Temperature, Top-K, and Nucleus (Top-p) sampling.
+
+## Planned Optimizations and Research
+The following architectural and evaluative improvements are actively being implemented:
+
+1. **KV Caching:** Refactoring the attention mechanism to cache Key and Value states during autoregressive generation, reducing computational complexity from $\mathcal{O}(N^2)$ to $\mathcal{O}(N)$.
+2. **Streaming Output Generator:** Yielding tokens iteratively during inference for reduced perceived latency.
+3. **Out-of-Distribution (OOD) Evaluation:** Computing zero-shot perplexity on out-of-domain datasets (e.g., WikiText) to measure generalization vs. dataset memorization.
+4. **Syntax Benchmarking (BLiMP):** Evaluating zero-shot grammatical competence using the Benchmark of Linguistic Minimal Pairs to measure structural understanding independent of cross-entropy loss.
+5. **Beam Search:** Implementing beam search decoding to improve global coherence in generated narratives.
+
+## Usage
+
+### Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Training
+The training script automatically detects the optimal device (CUDA, MPS, or CPU). On the first run, it will automatically download the TinyStories dataset and train the SentencePiece tokenizer.
+```bash
+python main.py
+```
+
+### Evaluation
+Evaluate perplexity, token accuracy, and generate a routing heatmap for a specific checkpoint:
+```bash
+python main.py --eval_only --resume checkpoints/final.pt
+```
+
+### Generation
+Generate text autoregressively using a trained checkpoint:
+```bash
+python generate.py --checkpoint checkpoints/final.pt --interactive
+```

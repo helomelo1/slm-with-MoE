@@ -51,6 +51,12 @@ The following architectural and evaluative improvements are actively being imple
 
 ## Usage
 
+### Pre-trained Weights
+If you do not want to train the model from scratch, you can download the final trained 12M parameter weights (Step 20,000) here:
+[Download `final.pt` (Google Drive)](https://drive.google.com/file/d/1sBxGOBGw7pLLTniH9Vni3Eb5OPzgZZWM/view?usp=sharing)
+
+Place the downloaded file in the `checkpoints/` directory as `checkpoints/final.pt` to use it with the evaluation and generation scripts.
+
 ### Dependencies
 ```bash
 pip install -r requirements.txt

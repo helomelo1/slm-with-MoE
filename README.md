@@ -61,7 +61,7 @@ The large OOD gap reflects tokenizer-level domain mismatch (vocabulary trained o
 
 ---
 
-## Mechanistic Interpretability
+## Interpretability
 
 ### Expert Routing Heatmap
 ![Expert Routing](/plots-and-images/experts_step_20000.png)

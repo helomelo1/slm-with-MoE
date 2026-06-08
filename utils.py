@@ -131,7 +131,7 @@ class TransformerBlock(nn.Module):
         self.norm1 = nn.RMSNorm(cfg["d_model"])
         self.norm2 = nn.RMSNorm(cfg["d_model"])
 
-    def forward(self, x, rope):
+    def forward(self, x, rope, kv_cache=None, use_cache=None):
         B, T, D = x.shape
         H, Hd = self.n_heads, self.head_dim
 
@@ -139,6 +139,15 @@ class TransformerBlock(nn.Module):
         q = self.q_proj(x).view(B, T, H, Hd).transpose(1, 2)
         k = self.k_proj(x).view(B, T, H, Hd).transpose(1, 2)
         v = self.v_proj(x).view(B, T, H, Hd).transpose(1, 2)
+
+        if use_cache:
+            if kv_cache is not None:
+                k = torch.cat([kv_cache[0], k], dim=2)
+                v = torch.cat([kv_cache[1], v], dim=2)
+
+            new_cache = (k, v)
+        else:
+            new_cache = None
 
         cos, sin = rope(T)
         q, k = apply_rope(q, k, cos, sin)
@@ -150,7 +159,7 @@ class TransformerBlock(nn.Module):
         x = self.norm1(x + attn_out)
         x = self.norm1(x + self.moe(x))
 
-        return x
+        return x, new_cache
     
 
 class LanguageModel(nn.Module):
@@ -169,12 +178,23 @@ class LanguageModel(nn.Module):
 
         self.head.weight = self.embed.weight
 
-    def forward(self, input_ids):
+    def forward(self, input_ids, kv_caches=None, use_cache=False):
         x = self.embed(input_ids)
 
-        for block in self.blocks:
-            x = block(x, self.rope)
+        new_caches = []
+        for i, block in enumerate(self.blocks):
+            cache = kv_caches[i] if kv_caches is not None else None
+            x, new_cache = block(
+                x, self.rope,
+                kv_cache=cache,
+                use_cache=use_cache
+            )
+
+            new_caches.append(new_cache)
         
         x = self.norm(x)
-        return self.head(x)
-    
+        x = self.head(x)
+
+        if use_cache:
+            return x, new_caches
+        return x

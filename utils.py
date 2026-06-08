@@ -140,6 +140,11 @@ class TransformerBlock(nn.Module):
         k = self.k_proj(x).view(B, T, H, Hd).transpose(1, 2)
         v = self.v_proj(x).view(B, T, H, Hd).transpose(1, 2)
 
+        offset = kv_cache[0].shape[2] if (use_cache and kv_cache is not None) else 0
+        cos, sin = rope(offset + T)
+        cos, sin = cos[offset:offset + T], sin[offset:offset + T]
+        q, k = apply_rope(q, k, cos, sin)
+
         if use_cache:
             if kv_cache is not None:
                 k = torch.cat([kv_cache[0], k], dim=2)
@@ -149,10 +154,11 @@ class TransformerBlock(nn.Module):
         else:
             new_cache = None
 
-        cos, sin = rope(T)
-        q, k = apply_rope(q, k, cos, sin)
+        if use_cache and kv_cache is not None:
+            attn_out = F.scaled_dot_product_attention(q, k, v, is_causal=False)
+        else:
+            attn_out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
 
-        attn_out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         attn_out = attn_out.transpose(1, 2).contiguous().view(B, T, D)
         attn_out = self.o_proj(attn_out)
 

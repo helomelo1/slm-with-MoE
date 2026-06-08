@@ -1,7 +1,7 @@
 # SLM-MoE
 ### A 12M Parameter Decoder-only Transformer with Sparse Mixture of Experts
 
-> Built from scratch in PyTorch · Trained on TinyStories · Mechanistic Interpretability focus
+> Built from scratch in PyTorch · Trained on TinyStories
 
 ---
 
